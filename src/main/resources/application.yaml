@@ -1,0 +1,22 @@
+server:
+  port: 8082
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: always
+
+spring:
+  datasource:
+    url: jdbc:sap://172.16.102.77:30015
+    username: DEVADMIN
+    password: D01Admin
+    driver-class-name: com.sap.db.jdbc.Driver
+
+logging:
+  level:
+    org.springframework.jdbc.core: DEBUG
+    com.gestiontickets: DEBUG
+
+app:
+  schema: ZDEV_GP
+  refresh-interval: 60000  # 60 secondes
