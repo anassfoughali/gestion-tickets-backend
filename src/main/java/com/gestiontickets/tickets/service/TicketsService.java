@@ -12,6 +12,26 @@ public class TicketsService {
     private final JdbcTemplate jdbcTemplate;
     private final String schema;
 
+    // ✅ Constantes au niveau de la CLASSE (pas dans une méthode)
+    private static final String SQL_RESOLU =
+            "LOWER(s.\"Matchcode\") LIKE '%%resolu%%' " +
+                    "OR LOWER(s.\"Matchcode\") LIKE '%%résolu%%'";
+
+    private static final String SQL_CLOTURE =
+            "LOWER(s.\"Matchcode\") LIKE '%%clôturé%%' " +
+                    "OR LOWER(s.\"Matchcode\") LIKE '%%cloturé%%' " +
+                    "OR LOWER(s.\"Matchcode\") LIKE '%%ferm%%'";
+
+    private static final String SQL_OUVERT =
+            "LOWER(s.\"Matchcode\") LIKE '%%ouvert%%' " +
+                    "OR LOWER(s.\"Matchcode\") LIKE '%%nouveau%%'";
+
+    private static final String SQL_EN_COURS =
+            "LOWER(s.\"Matchcode\") LIKE '%%cours%%' " +
+                    "OR LOWER(s.\"Matchcode\") LIKE '%%attente%%' " +
+                    "OR LOWER(s.\"Matchcode\") LIKE '%%escalad%%' " +
+                    "OR LOWER(s.\"Matchcode\") LIKE '%%affect%%'";
+
     public TicketsService(
             JdbcTemplate jdbcTemplate,
             @Value("${app.schema}") String schema) {
@@ -19,7 +39,6 @@ public class TicketsService {
         this.schema = schema;
     }
 
-    // Tous les tickets avec statut + priorité + type + durée
     public List<TicketFullDTO> getAllTickets() {
         String sql = String.format(
                 "SELECT " +
@@ -63,33 +82,28 @@ public class TicketsService {
         );
     }
 
-    // Stats par jour pour BarChart (30 derniers jours)
     public List<StatJourDTO> getStatsParJour() {
         String sql = String.format(
                 "SELECT " +
                         "  TO_VARCHAR(i.\"RequestDate\", 'DD/MM') as jour, " +
                         "  COUNT(*) as total, " +
-                        "  COUNT(CASE WHEN LOWER(s.\"Matchcode\") LIKE '%%clot%%' " +
-                        "              OR LOWER(s.\"Matchcode\") LIKE '%%ferm%%' " +
-                        "              OR LOWER(s.\"Matchcode\") LIKE '%%sans solution%%' " +
-                        "             THEN 1 END) as resolus, " +
-                        "  COUNT(CASE WHEN LOWER(s.\"Matchcode\") LIKE '%%ouvert%%' " +
-                        "              OR LOWER(s.\"Matchcode\") LIKE '%%nouveau%%' " +
-                        "             THEN 1 END) as ouverts, " +
-                        "  COUNT(CASE WHEN LOWER(s.\"Matchcode\") LIKE '%%cours%%' " +
-                        "              OR LOWER(s.\"Matchcode\") LIKE '%%affect%%' " +
-                        "             THEN 1 END) as enCours " +
+                        "  COUNT(CASE WHEN " + SQL_RESOLU   + " THEN 1 END) as resolus, " +
+                        "  COUNT(CASE WHEN " + SQL_CLOTURE  + " THEN 1 END) as clotures, " +
+                        "  COUNT(CASE WHEN " + SQL_OUVERT   + " THEN 1 END) as ouverts, " +
+                        "  COUNT(CASE WHEN " + SQL_EN_COURS + " THEN 1 END) as enCours " +
                         "FROM \"%s\".\"MARISupportIssue\" i " +
                         "JOIN \"%s\".\"MARISupportSettings\" s " +
                         "  ON i.\"Status\" = s.\"ID\" AND s.\"Setting\" = 1 " +
-                        "WHERE i.\"RequestDate\" >= ADD_DAYS(CURRENT_DATE, -30) " +
+                        "WHERE i.\"RequestDate\" >= ADD_DAYS(CURRENT_DATE, -60) " +
                         "GROUP BY TO_VARCHAR(i.\"RequestDate\", 'DD/MM'), i.\"RequestDate\" " +
                         "ORDER BY i.\"RequestDate\" ASC",
                 schema, schema);
 
+        // ✅ Ordre exact : date, resolved, clotures, open, enCours, total
         return jdbcTemplate.query(sql, (rs, rowNum) -> new StatJourDTO(
                 rs.getString("jour"),
                 rs.getLong("resolus"),
+                rs.getLong("clotures"),
                 rs.getLong("ouverts"),
                 rs.getLong("enCours"),
                 rs.getLong("total")

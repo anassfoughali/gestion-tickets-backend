@@ -3,7 +3,7 @@ server:
   error:
     include-message: always
     include-binding-errors: always
-    include-stacktrace: always
+    include-stacktrace: never
 
 spring:
   datasource:
@@ -20,3 +20,11 @@ logging:
 app:
   schema: ZDEV_GP
   refresh-interval: 60000  # 60 secondes
+
+  admin:
+    username: admin
+    password: admin123
+
+  jwt:
+    secret: GestionTicketsSAPHANASecretKey2026XYZ123456789AB
+    expiration-ms: 28800000  # 8 heures

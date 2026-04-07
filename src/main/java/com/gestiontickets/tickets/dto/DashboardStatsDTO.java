@@ -12,5 +12,5 @@ public class DashboardStatsDTO {
     private List<StatJourDTO> parJour;
     private List<TechnicienStatDTO> parTechnicien;
     private List<TicketRecentDTO> ticketsRecents;
-    private long lastUpdated;  //  timestamp du dernier refresh
+    private long lastUpdated;
 }

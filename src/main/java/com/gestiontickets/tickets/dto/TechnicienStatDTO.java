@@ -8,6 +8,7 @@ import lombok.*;
 public class TechnicienStatDTO {
     private String name;
     private long ticketsResolved;
+    private long ticketsClotures;
     private long ticketsOpen;
     private double avgResolutionTime;
 }
